@@ -1,0 +1,38 @@
+from PIL import Image
+import numpy as np
+import os
+
+# Set the desired image size (for example, 32x32 pixels)
+IMG_SIZE = (32, 32)
+
+# Path to your dataset (replace with the path to your ambulance images folder)
+dataset_path = 'ambulance_folder'
+
+# Function to process a single image
+def process_image(image_path):
+    # Open the image, convert to grayscale, and resize
+    img = Image.open(image_path).convert('L')  # Convert to grayscale
+    img = img.resize(IMG_SIZE)  # Resize to 32x32
+    # Convert the image to a numpy array and normalize pixel values (0 to 1)
+    img_array = np.array(img) / 255.0  # Normalize pixel values
+    return img_array
+
+# Process all images in the dataset folder
+processed_images = []
+for filename in os.listdir(dataset_path):
+    if filename.endswith('.jpg') or filename.endswith('.png'):  # Check if it's an image file
+        img_array = process_image(os.path.join(dataset_path, filename))
+        processed_images.append(img_array)
+
+# Convert the list of images into a numpy array
+processed_images = np.array(processed_images)
+
+# Save the processed data into a C-style array
+with open('ambulance_images.h', 'w') as f:
+    f.write(f'const float ambulance_images[{len(processed_images)}][{IMG_SIZE[0]}][{IMG_SIZE[1]}] = {{\n')
+    for img in processed_images:
+        f.write('  {')
+        for row in img:
+            f.write('{ ' + ', '.join(map(str, row)) + ' },\n')
+        f.write('  },\n')
+    f.write('};')
